@@ -34,6 +34,20 @@
     margin: 2cm;
   }
 }
+/* Update your existing cell class in your main CSS file */
+.cell { 
+  background-color: #ffffff; /* Assuming your playable cells are white */
+  
+  /* Add these two lines: */
+  border: 1px solid #333333; /* Adds a dark gray/black line around every single cell */
+  box-sizing: border-box;    /* Ensures adding a border doesn't change the size of your cells and break the grid */
+}
+
+/* Ensure the black empty space cells don't look weird with the new borders */
+.cell.empty {
+  background-color: #1a1a24; /* Your dark background color */
+  border: 1px solid #1a1a24; /* Match the border to the dark background so it blends in */
+}
 /* Paste this at the very end of your CSS file */
 @media print {
   .cell {
