@@ -37,8 +37,9 @@
 /* Paste this at the very end of your CSS file */
 @media print {
   .cell {
-    border: 1px solid #000 !important;
-  }
+    border: 1px solid #333333 !important; 
+  box-sizing: border-box !important;
+}
   .cell.empty {
     background-color: #1a1a24 !important;
     -webkit-print-color-adjust: exact !important;
