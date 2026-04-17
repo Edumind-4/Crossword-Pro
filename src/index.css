@@ -30,34 +30,21 @@
   border: 1px solid #1a1a24; 
 }
 
-/* Print-specific overrides */
 @media print {
-  .no-print {
-    display: none !important;
-  }
-  
-  .print-only {
-    display: block !important;
-  }
-  
-  body {
-    background: white !important;
-    padding: 0 !important;
-    margin: 0 !important;
-  }
-  
-  @page {
-    margin: 2cm;
+  /* Force ALL elements to print their background colors */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   .cell {
-    border: 1px solid #333333 !important; 
+    /* Use solid black (#000000) for print to ensure maximum contrast */
+    border: 1px solid #000000 !important; 
     box-sizing: border-box !important;
   }
   
   .cell.empty {
     background-color: #1a1a24 !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
+    border: 1px solid #1a1a24 !important;
   }
 }
