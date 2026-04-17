@@ -579,7 +579,7 @@ export default function App() {
               </motion.div>
             )}
 
-            <div className="flex justify-center mb-12 overflow-x-auto">
+            <div className="flex justify-center mb-12 overflow-x-auto print:mb-8 print-avoid-break">
               <div 
                 className="grid p-[2px] border-[2px] border-slate-900 bg-slate-900 gap-[1px] print:bg-black print:border-black print:gap-[1px] [print-color-adjust:exact]" 
                 style={{ 
@@ -597,13 +597,13 @@ export default function App() {
                     <div 
                       key={`${x}-${y}`} 
                       onClick={() => handleCellClick(x, y)}
-                      className={`relative w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center transition-all cursor-text [print-color-adjust:exact]
+                      className={`relative w-10 h-10 sm:w-12 sm:h-12 print:w-9 print:h-9 flex items-center justify-center transition-all cursor-text [print-color-adjust:exact]
                         ${char === null ? 'bg-slate-900 print:bg-black' : 
                           isFocused ? 'bg-yellow-200' : 
                           isActiveWord ? 'bg-indigo-50 print:bg-white' : 'bg-white'}`}
                     >
                       {numberEntry && (
-                        <span className="absolute top-1 left-1.5 text-[9px] sm:text-[11px] font-black leading-none text-slate-900 select-none z-10 print:text-black">
+                        <span className="absolute top-1 left-1 text-[9px] sm:text-[11px] print:text-[8px] font-black leading-none text-slate-900 select-none z-10 print:text-black">
                           {numberEntry.num}
                         </span>
                       )}
@@ -616,7 +616,7 @@ export default function App() {
                           onChange={(e) => handleInputChange(x, y, e.target.value)}
                           onKeyDown={(e) => handleKeyDown(e, x, y)}
                           readOnly={showKey}
-                          className={`w-full h-full bg-transparent text-center text-xl sm:text-2xl font-black focus:outline-none uppercase caret-transparent [print-color-adjust:exact]
+                          className={`w-full h-full bg-transparent text-center text-xl sm:text-2xl print:text-lg font-black focus:outline-none uppercase caret-transparent [print-color-adjust:exact]
                             ${showKey ? 'text-indigo-600 print:text-black' : 
                               value && !isCorrect && !showKey ? 'text-rose-500 print:text-black' : 
                               value && isCorrect ? 'text-indigo-600 print:text-black' : 'text-slate-900 print:text-black'}`}
@@ -643,7 +643,7 @@ export default function App() {
                       <li 
                         key={i} 
                         onClick={() => setFocusedCell({ x: clue.x, y: clue.y, dir: 'across' })}
-                        className={`flex gap-4 group cursor-pointer p-2 rounded-xl transition-all ${isActiveWord ? 'bg-indigo-50 ring-1 ring-indigo-100' : 'hover:bg-slate-50'}`}
+                        className={`flex gap-4 group cursor-pointer p-2 rounded-xl transition-all print-avoid-break ${isActiveWord ? 'bg-indigo-50 ring-1 ring-indigo-100' : 'hover:bg-slate-50'}`}
                       >
                         <span className={`shrink-0 w-8 h-8 flex items-center justify-center rounded-lg font-black text-xs transition-all ${isActiveWord ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-indigo-600 group-hover:text-white'}`}>
                           {clue.num}
@@ -669,7 +669,7 @@ export default function App() {
                       <li 
                         key={i} 
                         onClick={() => setFocusedCell({ x: clue.x, y: clue.y, dir: 'down' })}
-                        className={`flex gap-4 group cursor-pointer p-2 rounded-xl transition-all ${isActiveWord ? 'bg-indigo-50 ring-1 ring-indigo-100' : 'hover:bg-slate-50'}`}
+                        className={`flex gap-4 group cursor-pointer p-2 rounded-xl transition-all print-avoid-break ${isActiveWord ? 'bg-indigo-50 ring-1 ring-indigo-100' : 'hover:bg-slate-50'}`}
                       >
                         <span className={`shrink-0 w-8 h-8 flex items-center justify-center rounded-lg font-black text-xs transition-all ${isActiveWord ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-500 group-hover:bg-indigo-600 group-hover:text-white'}`}>
                           {clue.num}

@@ -33,7 +33,13 @@
     print-color-adjust: exact !important;
   }
   @page {
-    margin: 1cm;
+    margin: 1.5cm;
+    size: auto;
+  }
+  /* Prevent the grid from breaking across pages */
+  .print-avoid-break {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
   }
   /* Force borders to be visible in all browsers */
   * {
