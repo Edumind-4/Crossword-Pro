@@ -41,8 +41,19 @@
     break-inside: avoid !important;
     page-break-inside: avoid !important;
   }
-  /* Force borders to be visible in all browsers */
+  /* Force borders to be visible and remove container limits for print */
   * {
     border-color: black !important;
+    max-width: none !important;
+  }
+  .print-no-overflow {
+    overflow: visible !important;
+    width: 100% !important;
+    max-width: none !important;
+    display: block !important;
+  }
+  .print-scale-fix {
+    transform: scale(var(--print-scale, 1)) !important;
+    transform-origin: top center !important;
   }
 }

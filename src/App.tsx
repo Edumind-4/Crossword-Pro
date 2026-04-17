@@ -553,7 +553,7 @@ export default function App() {
           <motion.div 
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white border border-slate-200 rounded-[2rem] md:rounded-[3rem] p-4 xs:p-6 md:p-12 shadow-xl print:shadow-none print:border-none print:p-0"
+            className="bg-white border border-slate-200 rounded-[2rem] md:rounded-[3rem] p-4 xs:p-6 md:p-12 shadow-xl print:shadow-none print:border-none print:p-0 print-no-overflow"
           >
             <div className="hidden print:block text-center mb-12 border-b-2 border-slate-900 pb-8">
               <h1 className="text-3xl font-black mb-2">CrossWord Master</h1>
@@ -579,12 +579,14 @@ export default function App() {
               </motion.div>
             )}
 
-            <div className="flex justify-center mb-12 overflow-x-auto print:overflow-visible print:mb-8 print-avoid-break pb-4">
+            <div className="flex justify-start md:justify-center mb-12 overflow-x-auto print:overflow-visible print:mb-8 print-avoid-break pb-4 px-4 print:px-0">
               <div 
-                className="grid p-1 sm:p-[4px] border-[3px] border-slate-900 bg-slate-900 gap-[2px] sm:gap-[4px] print:bg-black print:border-black print:gap-[2px] [print-color-adjust:exact] min-w-max mx-auto" 
+                className="grid p-1 sm:p-[4px] border-[3px] border-slate-900 bg-slate-900 gap-[2px] sm:gap-[4px] print:bg-black print:border-black print:gap-[2px] [print-color-adjust:exact] min-w-max mx-auto origin-top transition-transform print-scale-fix" 
                 style={{ 
                   gridTemplateColumns: `repeat(${gridResult.cols}, minmax(0, 1fr))`,
-                }}
+                  // Dynamic print scaling: ensure it fits within ~650px print width
+                  '--print-scale': gridResult.cols > 15 ? Math.min(1, 650 / (gridResult.cols * 44)) : 1
+                } as any}
               >
                 {gridResult.grid.map((row, y) => row.map((char, x) => {
                   const numberEntry = gridResult.placedWords.find(pw => pw.x === x && pw.y === y);
