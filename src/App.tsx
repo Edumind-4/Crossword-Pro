@@ -579,59 +579,61 @@ export default function App() {
               </motion.div>
             )}
 
-            <div className="flex justify-start md:justify-center mb-12 overflow-x-auto print:overflow-visible print:mb-8 print-avoid-break pb-4 px-4 print:px-0">
-              <div 
-                className="grid p-1 sm:p-[4px] border-[3px] border-slate-900 bg-slate-900 gap-[2px] sm:gap-[4px] print:bg-black print:border-black print:gap-[2px] [print-color-adjust:exact] min-w-max mx-auto origin-top transition-transform print-scale-fix" 
-                style={{ 
-                  gridTemplateColumns: `repeat(${gridResult.cols}, minmax(0, 1fr))`,
-                  // Dynamic print scaling: ensure it fits within ~650px print width
-                  '--print-scale': gridResult.cols > 15 ? Math.min(1, 650 / (gridResult.cols * 44)) : 1
-                } as any}
-              >
-                {gridResult.grid.map((row, y) => row.map((char, x) => {
-                  const numberEntry = gridResult.placedWords.find(pw => pw.x === x && pw.y === y);
-                  const isFocused = focusedCell?.x === x && focusedCell?.y === y;
-                  const isActiveWord = isCellInActiveWord(x, y);
-                  const value = userInput[`${x},${y}`] || "";
-                  const isCorrect = value === char;
-                  
-                  return (
-                    <div 
-                      key={`${x}-${y}`} 
-                      onClick={() => handleCellClick(x, y)}
-                      className={`relative w-9 h-9 xs:w-11 xs:h-11 sm:w-14 sm:h-14 print:w-10 print:h-10 flex items-center justify-center transition-all cursor-text [print-color-adjust:exact] shadow-[0_2px_0_0_rgba(0,0,0,0.05)]
-                        ${char === null ? 'bg-slate-900 print:bg-black' : 
-                          isFocused ? 'bg-yellow-200 ring-2 ring-yellow-400 z-20 rounded-lg sm:rounded-xl shadow-md' : 
-                          isActiveWord ? 'bg-indigo-50 print:bg-white rounded-lg sm:rounded-xl' : 'bg-white rounded-lg sm:rounded-xl hover:bg-slate-50 hover:scale-[1.02]'}
-                        ${char !== null ? 'border-b-2 border-slate-100 print:border-none' : ''}`}
-                    >
-                      {numberEntry && (
-                        <span className="absolute top-1 left-1 sm:top-1.5 sm:left-1.5 text-[8px] xs:text-[9px] sm:text-[12px] print:text-[8px] font-black leading-none text-slate-900 select-none z-10 print:text-black">
-                          {numberEntry.num}
-                        </span>
-                      )}
-                      {char !== null && (
-                        <input
-                          type="text"
-                          maxLength={1}
-                          data-coord={`${x},${y}`}
-                          inputMode="text"
-                          autoCapitalize="characters"
-                          autoCorrect="off"
-                          autoComplete="off"
-                          value={showKey ? (char || "") : value}
-                          onChange={(e) => handleInputChange(x, y, e.target.value)}
-                          onKeyDown={(e) => handleKeyDown(e, x, y)}
-                          readOnly={showKey}
-                          className={`w-full h-full bg-transparent text-center text-lg xs:text-xl sm:text-3xl print:text-xl font-black focus:outline-none uppercase caret-transparent [print-color-adjust:exact]
-                            ${showKey ? 'text-indigo-600 print:text-black' : 
-                              value && !isCorrect && !showKey ? 'text-rose-500 print:text-black' : 
-                              value && isCorrect ? 'text-indigo-600 print:text-black' : 'text-slate-900 print:text-black'}`}
-                        />
-                      )}
-                    </div>
-                  );
-                }))}
+            <div className="w-full overflow-x-auto print:overflow-visible print:mb-8 print-avoid-break pb-8 touch-pan-x">
+              <div className="flex min-w-full px-4 sm:px-8">
+                <div 
+                  className="grid p-1 sm:p-[6px] border-[3px] border-slate-900 bg-slate-900 gap-[2px] sm:gap-[4px] print:bg-black print:border-black print:gap-[2px] [print-color-adjust:exact] min-w-max mx-auto origin-top transition-transform print-scale-fix" 
+                  style={{ 
+                    gridTemplateColumns: `repeat(${gridResult.cols}, minmax(0, 1fr))`,
+                    // Dynamic print scaling: ensure it fits within ~650px print width
+                    '--print-scale': gridResult.cols > 15 ? Math.min(1, 650 / (gridResult.cols * 44)) : 1
+                  } as any}
+                >
+                  {gridResult.grid.map((row, y) => row.map((char, x) => {
+                    const numberEntry = gridResult.placedWords.find(pw => pw.x === x && pw.y === y);
+                    const isFocused = focusedCell?.x === x && focusedCell?.y === y;
+                    const isActiveWord = isCellInActiveWord(x, y);
+                    const value = userInput[`${x},${y}`] || "";
+                    const isCorrect = value === char;
+                    
+                    return (
+                      <div 
+                        key={`${x}-${y}`} 
+                        onClick={() => handleCellClick(x, y)}
+                        className={`relative w-9 h-9 xs:w-11 xs:h-11 sm:w-14 sm:h-14 print:w-10 print:h-10 flex items-center justify-center transition-all cursor-text [print-color-adjust:exact] shadow-[0_2px_0_0_rgba(0,0,0,0.05)]
+                          ${char === null ? 'bg-slate-900 print:bg-black' : 
+                            isFocused ? 'bg-yellow-200 ring-2 ring-yellow-400 z-20 rounded-lg sm:rounded-xl shadow-md' : 
+                            isActiveWord ? 'bg-indigo-50 print:bg-white rounded-lg sm:rounded-xl' : 'bg-white rounded-lg sm:rounded-xl hover:bg-slate-50 hover:scale-[1.02]'}
+                          ${char !== null ? 'border-b-2 border-slate-100 print:border-none' : ''}`}
+                      >
+                        {numberEntry && (
+                          <span className="absolute top-1 left-1 sm:top-1.5 sm:left-1.5 text-[8px] xs:text-[9px] sm:text-[12px] print:text-[8px] font-black leading-none text-slate-900 select-none z-10 print:text-black">
+                            {numberEntry.num}
+                          </span>
+                        )}
+                        {char !== null && (
+                          <input
+                            type="text"
+                            maxLength={1}
+                            data-coord={`${x},${y}`}
+                            inputMode="text"
+                            autoCapitalize="characters"
+                            autoCorrect="off"
+                            autoComplete="off"
+                            value={showKey ? (char || "") : value}
+                            onChange={(e) => handleInputChange(x, y, e.target.value)}
+                            onKeyDown={(e) => handleKeyDown(e, x, y)}
+                            readOnly={showKey}
+                            className={`w-full h-full bg-transparent text-center text-lg xs:text-xl sm:text-3xl print:text-xl font-black focus:outline-none uppercase caret-transparent [print-color-adjust:exact]
+                              ${showKey ? 'text-indigo-600 print:text-black' : 
+                                value && !isCorrect && !showKey ? 'text-rose-500 print:text-black' : 
+                                value && isCorrect ? 'text-indigo-600 print:text-black' : 'text-slate-900 print:text-black'}`}
+                          />
+                        )}
+                      </div>
+                    );
+                  }))}
+                </div>
               </div>
             </div>
 
