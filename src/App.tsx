@@ -184,6 +184,7 @@ export default function App() {
   const [aiText, setAiText] = useState("");
   const [aiCount, setAiCount] = useState(10);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [gridResult, setGridResult] = useState<GridResult | null>(null);
   const [showKey, setShowKey] = useState(false);
   const [userInput, setUserInput] = useState<Record<string, string>>({});
@@ -318,8 +319,18 @@ export default function App() {
   const handleAiExtract = async () => {
     if (!aiText.trim()) return;
     setLoading(true);
+    setError(null);
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      setError("Gemini API Key is missing. If you are deploying this yourself, please ensure GEMINI_API_KEY is set in your environment variables. In AI Studio, ensure you have set it in the Secrets panel.");
+      setLoading(false);
+      return;
+    }
+
     try {
-      const response = await ai.models.generateContent({model: "gemini-2.5-flash-lite",
+      const response = await ai.models.generateContent({
+        model: "gemini-3.1-flash-lite-preview",
         contents: `Analyze the following text. Extract exactly ${aiCount} challenging or thematic vocabulary words from it. 
         For each word, write a clear, 1-sentence clue suitable for a crossword puzzle.
         Output as a JSON array of objects with keys "word" and "clue". Letters only for words.
@@ -348,8 +359,9 @@ export default function App() {
       setGridResult(res);
       setUserInput({});
       setFocusedCell(null);
-    } catch (error) {
-      console.error(error);
+    } catch (err: any) {
+      console.error(err);
+      setError(err?.message || "An unexpected error occurred during AI extraction.");
     } finally {
       setLoading(false);
     }
@@ -474,6 +486,20 @@ export default function App() {
               </motion.div>
             )}
           </AnimatePresence>
+
+          {error && (
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              className="mt-6 p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-700 flex items-start gap-3"
+            >
+              <AlertCircle className="shrink-0 mt-0.5" size={18} />
+              <div>
+                <p className="text-sm font-bold">Extraction Error</p>
+                <p className="text-xs opacity-90">{error}</p>
+              </div>
+            </motion.div>
+          )}
         </div>
 
         {/* Failed Words Alert */}
@@ -555,7 +581,7 @@ export default function App() {
 
             <div className="flex justify-center mb-12 overflow-x-auto">
               <div 
-                className="grid p-1 border-2 border-slate-900 bg-slate-900 gap-[1px]" 
+                className="grid p-[2px] border-[2px] border-slate-900 bg-slate-900 gap-[1px] print:bg-black print:border-black print:gap-[1px] [print-color-adjust:exact]" 
                 style={{ 
                   gridTemplateColumns: `repeat(${gridResult.cols}, minmax(0, 1fr))`,
                 }}
@@ -571,10 +597,13 @@ export default function App() {
                     <div 
                       key={`${x}-${y}`} 
                       onClick={() => handleCellClick(x, y)}
-                      className={`relative w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center transition-all cursor-text ${char === null ? 'bg-slate-900' : isFocused ? 'bg-yellow-200' : isActiveWord ? 'bg-indigo-50' : 'bg-white'}`}
+                      className={`relative w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center transition-all cursor-text [print-color-adjust:exact]
+                        ${char === null ? 'bg-slate-900 print:bg-black' : 
+                          isFocused ? 'bg-yellow-200' : 
+                          isActiveWord ? 'bg-indigo-50 print:bg-white' : 'bg-white'}`}
                     >
                       {numberEntry && (
-                        <span className="absolute top-1 left-1.5 text-[9px] sm:text-[11px] font-black leading-none text-slate-900 select-none z-10">
+                        <span className="absolute top-1 left-1.5 text-[9px] sm:text-[11px] font-black leading-none text-slate-900 select-none z-10 print:text-black">
                           {numberEntry.num}
                         </span>
                       )}
@@ -587,10 +616,10 @@ export default function App() {
                           onChange={(e) => handleInputChange(x, y, e.target.value)}
                           onKeyDown={(e) => handleKeyDown(e, x, y)}
                           readOnly={showKey}
-                          className={`w-full h-full bg-transparent text-center text-xl sm:text-2xl font-black focus:outline-none uppercase caret-transparent
-                            ${showKey ? 'text-indigo-600' : 
-                              value && !isCorrect && !showKey ? 'text-rose-500' : 
-                              value && isCorrect ? 'text-indigo-600' : 'text-slate-900'}`}
+                          className={`w-full h-full bg-transparent text-center text-xl sm:text-2xl font-black focus:outline-none uppercase caret-transparent [print-color-adjust:exact]
+                            ${showKey ? 'text-indigo-600 print:text-black' : 
+                              value && !isCorrect && !showKey ? 'text-rose-500 print:text-black' : 
+                              value && isCorrect ? 'text-indigo-600 print:text-black' : 'text-slate-900 print:text-black'}`}
                         />
                       )}
                     </div>
