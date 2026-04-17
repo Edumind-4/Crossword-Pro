@@ -320,7 +320,7 @@ export default function App() {
     setLoading(true);
     try {
       const response = await ai.models.generateContent({
-        model: "gemini-2.5-flash-lite-preview",
+        model: "gemini-2.5-flash-lite",
         contents: `Analyze the following text. Extract exactly ${aiCount} challenging or thematic vocabulary words from it. 
         For each word, write a clear, 1-sentence clue suitable for a crossword puzzle.
         Output as a JSON array of objects with keys "word" and "clue". Letters only for words.
