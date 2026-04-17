@@ -34,3 +34,14 @@
     margin: 2cm;
   }
 }
+/* Paste this at the very end of your CSS file */
+@media print {
+  .cell {
+    border: 1px solid #000 !important;
+  }
+  .cell.empty {
+    background-color: #1a1a24 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}
