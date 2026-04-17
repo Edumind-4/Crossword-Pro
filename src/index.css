@@ -18,33 +18,25 @@
   }
 }
 
-/* Base styles for the crossword cells on screen */
-.cell { 
-  background-color: #ffffff;
-  border: 1px solid #333333; 
-  box-sizing: border-box;    
-}
-
-.cell.empty {
-  background-color: #1a1a24;
-  border: 1px solid #1a1a24; 
-}
-
 @media print {
-  /* Force ALL elements to print their background colors */
-  * {
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  body {
+    background: white !important;
+    padding: 0 !important;
+    margin: 0 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
-
-  .cell {
-    /* Use solid black (#000000) for print to ensure maximum contrast */
-    border: 1px solid #000000 !important; 
-    box-sizing: border-box !important;
+  @page {
+    margin: 1cm;
   }
-  
-  .cell.empty {
-    background-color: #1a1a24 !important;
-    border: 1px solid #1a1a24 !important;
+  /* Force borders to be visible in all browsers */
+  * {
+    border-color: black !important;
   }
 }
