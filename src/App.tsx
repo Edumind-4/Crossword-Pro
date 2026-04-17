@@ -384,30 +384,30 @@ export default function App() {
       <div className="max-w-5xl mx-auto">
         
         {/* Header */}
-        <header className="text-center mb-12">
-          <motion.div 
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-600 text-white mb-6 shadow-xl shadow-indigo-200"
-          >
-            <Puzzle size={32} />
-          </motion.div>
-          <motion.h1 
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            className="text-4xl md:text-5xl font-black tracking-tight text-indigo-950 mb-4"
-          >
-            CrossWord <span className="text-indigo-600">Pro</span>
-          </motion.h1>
-          <motion.p 
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.1 }}
-            className="text-slate-500 text-lg max-w-2xl mx-auto"
-          >
-            Transform any word list or lengthy text into a professional interlocking crossword puzzle.
-          </motion.p>
-        </header>
+          <header className="text-center mb-8 md:mb-12">
+            <motion.div 
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-indigo-600 text-white mb-4 md:mb-6 shadow-xl shadow-indigo-200"
+            >
+              <Puzzle className="w-6 h-6 md:w-8 md:h-8" />
+            </motion.div>
+            <motion.h1 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              className="text-3xl md:text-5xl font-black tracking-tight text-indigo-950 mb-3 md:mb-4"
+            >
+              CrossWord <span className="text-indigo-600">Pro</span>
+            </motion.h1>
+            <motion.p 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.1 }}
+              className="text-slate-500 text-base md:text-lg max-w-2xl mx-auto px-4"
+            >
+              Transform any word list or lengthy text into a professional interlocking crossword puzzle.
+            </motion.p>
+          </header>
 
         {/* Input Panel */}
         <div className="bg-white border border-slate-200 rounded-3xl shadow-sm p-6 mb-8 print:hidden">
@@ -553,7 +553,7 @@ export default function App() {
           <motion.div 
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white border border-slate-200 rounded-[3rem] p-8 md:p-12 shadow-xl print:shadow-none print:border-none print:p-0"
+            className="bg-white border border-slate-200 rounded-[2rem] md:rounded-[3rem] p-4 xs:p-6 md:p-12 shadow-xl print:shadow-none print:border-none print:p-0"
           >
             <div className="hidden print:block text-center mb-12 border-b-2 border-slate-900 pb-8">
               <h1 className="text-3xl font-black mb-2">CrossWord Master</h1>
@@ -579,9 +579,9 @@ export default function App() {
               </motion.div>
             )}
 
-            <div className="flex justify-center mb-12 overflow-x-auto print:mb-8 print-avoid-break">
+            <div className="flex justify-center mb-12 overflow-x-auto print:mb-8 print-avoid-break pb-4">
               <div 
-                className="grid p-[2px] border-[2px] border-slate-900 bg-slate-900 gap-[1px] print:bg-black print:border-black print:gap-[1px] [print-color-adjust:exact]" 
+                className="grid p-[2px] border-[2px] border-slate-900 bg-slate-900 gap-[1px] print:bg-black print:border-black print:gap-[2px] [print-color-adjust:exact] min-w-max" 
                 style={{ 
                   gridTemplateColumns: `repeat(${gridResult.cols}, minmax(0, 1fr))`,
                 }}
@@ -597,13 +597,13 @@ export default function App() {
                     <div 
                       key={`${x}-${y}`} 
                       onClick={() => handleCellClick(x, y)}
-                      className={`relative w-10 h-10 sm:w-12 sm:h-12 print:w-9 print:h-9 flex items-center justify-center transition-all cursor-text [print-color-adjust:exact]
+                      className={`relative w-8 h-8 xs:w-10 xs:h-10 sm:w-12 sm:h-12 print:w-9 print:h-9 flex items-center justify-center transition-all cursor-text [print-color-adjust:exact]
                         ${char === null ? 'bg-slate-900 print:bg-black' : 
                           isFocused ? 'bg-yellow-200' : 
                           isActiveWord ? 'bg-indigo-50 print:bg-white' : 'bg-white'}`}
                     >
                       {numberEntry && (
-                        <span className="absolute top-1 left-1 text-[9px] sm:text-[11px] print:text-[8px] font-black leading-none text-slate-900 select-none z-10 print:text-black">
+                        <span className="absolute top-0.5 left-0.5 sm:top-1 sm:left-1 text-[8px] xs:text-[9px] sm:text-[11px] print:text-[8px] font-black leading-none text-slate-900 select-none z-10 print:text-black">
                           {numberEntry.num}
                         </span>
                       )}
@@ -612,11 +612,15 @@ export default function App() {
                           type="text"
                           maxLength={1}
                           data-coord={`${x},${y}`}
+                          inputMode="text"
+                          autoCapitalize="characters"
+                          autoCorrect="off"
+                          autoComplete="off"
                           value={showKey ? (char || "") : value}
                           onChange={(e) => handleInputChange(x, y, e.target.value)}
                           onKeyDown={(e) => handleKeyDown(e, x, y)}
                           readOnly={showKey}
-                          className={`w-full h-full bg-transparent text-center text-xl sm:text-2xl print:text-lg font-black focus:outline-none uppercase caret-transparent [print-color-adjust:exact]
+                          className={`w-full h-full bg-transparent text-center text-lg xs:text-xl sm:text-2xl print:text-lg font-black focus:outline-none uppercase caret-transparent [print-color-adjust:exact]
                             ${showKey ? 'text-indigo-600 print:text-black' : 
                               value && !isCorrect && !showKey ? 'text-rose-500 print:text-black' : 
                               value && isCorrect ? 'text-indigo-600 print:text-black' : 'text-slate-900 print:text-black'}`}
