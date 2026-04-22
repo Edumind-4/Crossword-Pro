@@ -361,12 +361,12 @@ export default function App() {
       await setDoc(doc(db, 'puzzles', shortId), puzzleRecord);
       
       // Determine the best share URL
-      // If we're in an iframe, we try to get the parent URL, otherwise use current
-      let baseUrl = window.location.origin + window.location.pathname;
+      const currentParams = new URLSearchParams(window.location.search);
+      const parentUrl = currentParams.get('parentUrl');
       
-      // Check if we are embedded and try to use the parent URL if available
-      // Note: This only works if on same domain or if specifically configured,
-      // so we use a fallback to the current link.
+      // If we're in an iframe, we try to use the parentUrl provided via params
+      let baseUrl = parentUrl || (window.location.origin + window.location.pathname);
+      
       const url = new URL(baseUrl);
       url.searchParams.set('p', shortId);
       
@@ -392,12 +392,23 @@ export default function App() {
           c: gridResult.cols
         };
         const serialized = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
-        const url = new URL(window.location.origin + window.location.pathname);
+        
+        const currentParams = new URLSearchParams(window.location.search);
+        const parentUrl = currentParams.get('parentUrl');
+        let baseUrl = parentUrl || (window.location.origin + window.location.pathname);
+        
+        const url = new URL(baseUrl);
         url.searchParams.set('puzzle', serialized);
         
-        navigator.clipboard.writeText(url.toString());
-        setShareSuccess(true);
-        setTimeout(() => setShareSuccess(false), 2000);
+        const shareUrl = url.toString();
+        
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+          setShareSuccess(true);
+          setTimeout(() => setShareSuccess(false), 2000);
+        } catch (clipboardError) {
+          prompt("Copy your puzzle link below:", shareUrl);
+        }
       } catch (err) {
         console.error("Total share failure", err);
         alert("Could not generate share link.");
