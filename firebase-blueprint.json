@@ -1,0 +1,35 @@
+{
+  "entities": {
+    "Puzzle": {
+      "title": "Puzzle",
+      "description": "Store crossword puzzle data for sharing",
+      "type": "object",
+      "properties": {
+        "placedWords": {
+          "type": "array",
+          "description": "List of placed words with coordinates and clues"
+        },
+        "rows": {
+          "type": "number",
+          "description": "Number of rows in the grid"
+        },
+        "cols": {
+          "type": "number",
+          "description": "Number of columns in the grid"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp"
+        }
+      },
+      "required": ["placedWords", "rows", "cols", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/puzzles/{puzzleId}": {
+      "schema": "Puzzle",
+      "description": "Collection of shared crossword puzzles"
+    }
+  }
+}

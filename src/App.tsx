@@ -6,6 +6,9 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { GoogleGenAI, Type } from "@google/genai";
 import { motion, AnimatePresence } from "motion/react";
+import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { nanoid } from 'nanoid';
+import { db } from './lib/firebase';
 import { 
   Puzzle, 
   Sparkles, 
@@ -198,21 +201,55 @@ export default function App() {
 
   // Handle Loading Shared Puzzle
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const puzzleData = params.get('puzzle');
-    if (puzzleData) {
-      try {
-        const decodedStr = decodeURIComponent(escape(atob(puzzleData)));
-        const decoded = JSON.parse(decodedStr);
-        const placedWords = decoded.p.map((p: any) => ({
-          word: p[0],
-          clue: p[1],
-          x: p[2],
-          y: p[3],
-          isAcross: p[4]
-        }));
-        
-        const grid = Array(decoded.r).fill(null).map(() => Array(decoded.c).fill(null));
+    const loadPuzzle = async () => {
+      const params = new URLSearchParams(window.location.search);
+      const shortId = params.get('p');
+      const puzzleData = params.get('puzzle');
+
+      let data: any = null;
+
+      if (shortId) {
+        setLoading(true);
+        try {
+          const docSnap = await getDoc(doc(db, 'puzzles', shortId));
+          if (docSnap.exists()) {
+            data = docSnap.data();
+          } else {
+            setError("Shared puzzle not found. It may have expired or the link is incorrect.");
+          }
+        } catch (e) {
+          console.error("Error fetching shared puzzle:", e);
+          setError("Failed to connect to the database. Trying fallback...");
+        } finally {
+          setLoading(false);
+        }
+      }
+
+      // Fallback to long puzzle data
+      if (!data && puzzleData) {
+        try {
+          const decodedStr = decodeURIComponent(escape(atob(puzzleData)));
+          const decoded = JSON.parse(decodedStr);
+          data = {
+            placedWords: decoded.p.map((p: any) => ({
+              word: p[0],
+              clue: p[1],
+              x: p[2],
+              y: p[3],
+              isAcross: p[4]
+            })),
+            rows: decoded.r,
+            cols: decoded.c
+          };
+        } catch (e) {
+          console.error("Failed to load fallback puzzle data", e);
+          setError("The shared link appears to be invalid or corrupted.");
+        }
+      }
+
+      if (data) {
+        const { placedWords, rows, cols } = data;
+        const grid = Array(rows).fill(null).map(() => Array(cols).fill(null));
         placedWords.forEach((pw: any) => {
           for (let i = 0; i < pw.word.length; i++) {
             const cx = pw.x + (pw.isAcross ? i : 0);
@@ -221,10 +258,10 @@ export default function App() {
           }
         });
 
-        placedWords.sort((a: any, b: any) => (a.y === b.y ? a.x - b.x : a.y - b.y));
+        const sortedWords = [...placedWords].sort((a: any, b: any) => (a.y === b.y ? a.x - b.x : a.y - b.y));
         let currentNum = 1;
         const numberMap: Record<string, number> = {};
-        placedWords.forEach((pw: any) => {
+        sortedWords.forEach((pw: any) => {
           const key = `${pw.x},${pw.y}`;
           if (numberMap[key]) {
             pw.num = numberMap[key];
@@ -236,16 +273,15 @@ export default function App() {
 
         setGridResult({
           grid,
-          placedWords,
+          placedWords: sortedWords,
           failedWords: [],
-          rows: decoded.r,
-          cols: decoded.c
+          rows,
+          cols
         });
-      } catch (e) {
-        console.error("Failed to load shared puzzle", e);
-        setError("The shared link appears to be invalid or corrupted.");
       }
-    }
+    };
+
+    loadPuzzle();
   }, []);
 
   // Programmatic Focus Management
@@ -297,26 +333,56 @@ export default function App() {
     }
   }, [gridResult]);
 
-  const handleShare = useCallback(() => {
+  const handleShare = useCallback(async () => {
     if (!gridResult) return;
     
+    setLoading(true);
     try {
-      const data = {
-        p: gridResult.placedWords.map(pw => [pw.word, pw.clue, pw.x, pw.y, pw.isAcross]),
-        r: gridResult.rows,
-        c: gridResult.cols
+      const shortId = nanoid(8);
+      const puzzleRecord = {
+        placedWords: gridResult.placedWords.map(pw => ({
+          word: pw.word,
+          clue: pw.clue,
+          x: pw.x,
+          y: pw.y,
+          isAcross: pw.isAcross
+        })),
+        rows: gridResult.rows,
+        cols: gridResult.cols,
+        createdAt: serverTimestamp()
       };
       
-      const serialized = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+      await setDoc(doc(db, 'puzzles', shortId), puzzleRecord);
+      
       const url = new URL(window.location.origin + window.location.pathname);
-      url.searchParams.set('puzzle', serialized);
+      url.searchParams.set('p', shortId);
       
       navigator.clipboard.writeText(url.toString());
       setShareSuccess(true);
       setTimeout(() => setShareSuccess(false), 2000);
     } catch (e) {
-      console.error("Failed to share puzzle", e);
-      alert("Could not generate share link.");
+      console.error("Failed to share puzzle to DB, falling back to long link", e);
+      
+      // Fallback to long link
+      try {
+        const data = {
+          p: gridResult.placedWords.map(pw => [pw.word, pw.clue, pw.x, pw.y, pw.isAcross]),
+          r: gridResult.rows,
+          c: gridResult.cols
+        };
+        const serialized = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+        const url = new URL(window.location.origin + window.location.pathname);
+        url.searchParams.set('puzzle', serialized);
+        
+        navigator.clipboard.writeText(url.toString());
+        setShareSuccess(true);
+        setTimeout(() => setShareSuccess(false), 2000);
+      } catch (err) {
+        console.error("Total share failure", err);
+        alert("Could not generate share link.");
+      }
+    } finally {
+      setLoading(false);
     }
   }, [gridResult]);
 

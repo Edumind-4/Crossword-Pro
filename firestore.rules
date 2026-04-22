@@ -1,0 +1,37 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function isValidPuzzle(data) {
+      return data.keys().hasAll(['placedWords', 'rows', 'cols', 'createdAt']) &&
+             data.keys().size() == 4 &&
+             data.placedWords is list &&
+             data.rows is number &&
+             data.cols is number &&
+             data.createdAt == request.time;
+    }
+
+    match /puzzles/{puzzleId} {
+      allow get: if true;
+      allow create: if isValidId(puzzleId) && isValidPuzzle(incoming());
+      // No updates or deletes allowed for shared puzzles to maintain integrity
+    }
+  }
+}
