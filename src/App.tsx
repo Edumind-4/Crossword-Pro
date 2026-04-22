@@ -17,7 +17,10 @@ import {
   Hash,
   List as ListIcon,
   ChevronRight,
-  Loader2
+  Loader2,
+  Share2,
+  Check,
+  Link as LinkIcon
 } from "lucide-react";
 
 // --- Types ---
@@ -189,8 +192,61 @@ export default function App() {
   const [showKey, setShowKey] = useState(false);
   const [userInput, setUserInput] = useState<Record<string, string>>({});
   const [focusedCell, setFocusedCell] = useState<{ x: number, y: number, dir: 'across' | 'down' } | null>(null);
+  const [shareSuccess, setShareSuccess] = useState(false);
 
   const ai = useMemo(() => new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' }), []);
+
+  // Handle Loading Shared Puzzle
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const puzzleData = params.get('puzzle');
+    if (puzzleData) {
+      try {
+        const decodedStr = decodeURIComponent(escape(atob(puzzleData)));
+        const decoded = JSON.parse(decodedStr);
+        const placedWords = decoded.p.map((p: any) => ({
+          word: p[0],
+          clue: p[1],
+          x: p[2],
+          y: p[3],
+          isAcross: p[4]
+        }));
+        
+        const grid = Array(decoded.r).fill(null).map(() => Array(decoded.c).fill(null));
+        placedWords.forEach((pw: any) => {
+          for (let i = 0; i < pw.word.length; i++) {
+            const cx = pw.x + (pw.isAcross ? i : 0);
+            const cy = pw.y + (!pw.isAcross ? i : 0);
+            grid[cy][cx] = pw.word[i];
+          }
+        });
+
+        placedWords.sort((a: any, b: any) => (a.y === b.y ? a.x - b.x : a.y - b.y));
+        let currentNum = 1;
+        const numberMap: Record<string, number> = {};
+        placedWords.forEach((pw: any) => {
+          const key = `${pw.x},${pw.y}`;
+          if (numberMap[key]) {
+            pw.num = numberMap[key];
+          } else {
+            pw.num = currentNum++;
+            numberMap[key] = pw.num;
+          }
+        });
+
+        setGridResult({
+          grid,
+          placedWords,
+          failedWords: [],
+          rows: decoded.r,
+          cols: decoded.c
+        });
+      } catch (e) {
+        console.error("Failed to load shared puzzle", e);
+        setError("The shared link appears to be invalid or corrupted.");
+      }
+    }
+  }, []);
 
   // Programmatic Focus Management
   useEffect(() => {
@@ -238,6 +294,29 @@ export default function App() {
 
     if (nextX >= 0 && nextX < gridResult.cols && nextY >= 0 && nextY < gridResult.rows) {
       setFocusedCell({ x: nextX, y: nextY, dir });
+    }
+  }, [gridResult]);
+
+  const handleShare = useCallback(() => {
+    if (!gridResult) return;
+    
+    try {
+      const data = {
+        p: gridResult.placedWords.map(pw => [pw.word, pw.clue, pw.x, pw.y, pw.isAcross]),
+        r: gridResult.rows,
+        c: gridResult.cols
+      };
+      
+      const serialized = btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+      const url = new URL(window.location.origin + window.location.pathname);
+      url.searchParams.set('puzzle', serialized);
+      
+      navigator.clipboard.writeText(url.toString());
+      setShareSuccess(true);
+      setTimeout(() => setShareSuccess(false), 2000);
+    } catch (e) {
+      console.error("Failed to share puzzle", e);
+      alert("Could not generate share link.");
     }
   }, [gridResult]);
 
@@ -544,6 +623,13 @@ export default function App() {
               className="py-3 px-6 bg-white border-2 border-slate-200 hover:border-indigo-500 text-slate-700 hover:text-indigo-600 font-bold text-sm rounded-2xl transition-all flex items-center justify-center gap-2"
             >
               <Printer size={16} />
+            </button>
+            <button 
+              onClick={handleShare}
+              className={`py-3 px-6 border-2 font-bold text-sm rounded-2xl transition-all flex items-center justify-center gap-2 ${shareSuccess ? 'bg-indigo-600 border-indigo-600 text-white' : 'bg-white border-slate-200 text-slate-700 hover:border-indigo-500 hover:text-indigo-600'}`}
+            >
+              {shareSuccess ? <Check size={16} /> : <Share2 size={16} />}
+              {shareSuccess ? "Copied!" : "Share Link"}
             </button>
           </div>
         )}
