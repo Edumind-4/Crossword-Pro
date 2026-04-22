@@ -23,7 +23,8 @@ import {
   Loader2,
   Share2,
   Check,
-  Link as LinkIcon
+  Link as LinkIcon,
+  Plus as PlusIcon
 } from "lucide-react";
 
 // --- Types ---
@@ -196,6 +197,7 @@ export default function App() {
   const [userInput, setUserInput] = useState<Record<string, string>>({});
   const [focusedCell, setFocusedCell] = useState<{ x: number, y: number, dir: 'across' | 'down' } | null>(null);
   const [shareSuccess, setShareSuccess] = useState(false);
+  const [isSharedView, setIsSharedView] = useState(false);
 
   const ai = useMemo(() => new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' }), []);
 
@@ -205,6 +207,10 @@ export default function App() {
       const params = new URLSearchParams(window.location.search);
       const shortId = params.get('p');
       const puzzleData = params.get('puzzle');
+
+      if (shortId || puzzleData) {
+        setIsSharedView(true);
+      }
 
       let data: any = null;
 
@@ -354,12 +360,27 @@ export default function App() {
       
       await setDoc(doc(db, 'puzzles', shortId), puzzleRecord);
       
-      const url = new URL(window.location.origin + window.location.pathname);
+      // Determine the best share URL
+      // If we're in an iframe, we try to get the parent URL, otherwise use current
+      let baseUrl = window.location.origin + window.location.pathname;
+      
+      // Check if we are embedded and try to use the parent URL if available
+      // Note: This only works if on same domain or if specifically configured,
+      // so we use a fallback to the current link.
+      const url = new URL(baseUrl);
       url.searchParams.set('p', shortId);
       
-      navigator.clipboard.writeText(url.toString());
-      setShareSuccess(true);
-      setTimeout(() => setShareSuccess(false), 2000);
+      const shareUrl = url.toString();
+      
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        setShareSuccess(true);
+        setTimeout(() => setShareSuccess(false), 2000);
+      } catch (clipboardError) {
+        console.error("Clipboard access denied", clipboardError);
+        // Fallback for browsers that block clipboard in iframes
+        prompt("Copy your puzzle link below:", shareUrl);
+      }
     } catch (e) {
       console.error("Failed to share puzzle to DB, falling back to long link", e);
       
@@ -529,126 +550,127 @@ export default function App() {
       <div className="max-w-5xl mx-auto">
         
         {/* Header */}
-          <header className="text-center mb-8 md:mb-12">
-            <motion.div 
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-indigo-600 text-white mb-4 md:mb-6 shadow-xl shadow-indigo-200"
-            >
-              <Puzzle className="w-6 h-6 md:w-8 md:h-8" />
-            </motion.div>
-            <motion.h1 
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              className="text-3xl md:text-5xl font-black tracking-tight text-indigo-950 mb-3 md:mb-4"
-            >
-              CrossWord <span className="text-indigo-600">Pro</span>
-            </motion.h1>
-            <motion.p 
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.1 }}
-              className="text-slate-500 text-base md:text-lg max-w-2xl mx-auto px-4"
-            >
-              Transform any word list or lengthy text into a professional interlocking crossword puzzle.
-            </motion.p>
-          </header>
+            <header className="text-center mb-8 md:mb-12">
+              <motion.div 
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="inline-flex items-center justify-center w-12 h-12 md:w-16 md:h-16 rounded-2xl bg-indigo-600 text-white mb-4 md:mb-6 shadow-xl shadow-indigo-200"
+              >
+                <Puzzle className="w-6 h-6 md:w-8 md:h-8" />
+              </motion.div>
+              <motion.h1 
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                className="text-3xl md:text-5xl font-black tracking-tight text-indigo-950 mb-3 md:mb-4"
+              >
+                CrossWord <span className="text-indigo-600">Pro</span>
+              </motion.h1>
+              {!isSharedView && (
+                <motion.p 
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ delay: 0.1 }}
+                  className="text-slate-500 text-base md:text-lg max-w-2xl mx-auto px-4"
+                >
+                  Transform any word list or lengthy text into a professional interlocking crossword puzzle.
+                </motion.p>
+              )}
+              {isSharedView && (
+                <div className="flex flex-col items-center gap-4">
+                  <p className="text-slate-500 font-medium">A puzzle has been shared with you!</p>
+                  <a 
+                    href={window.location.origin + window.location.pathname}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-600 rounded-full font-bold text-sm hover:bg-indigo-100 transition-colors border border-indigo-100 print:hidden"
+                  >
+                    <PlusIcon size={14} /> Create Your Own
+                  </a>
+                </div>
+              )}
+            </header>
 
         {/* Input Panel */}
-        <div className="bg-white border border-slate-200 rounded-3xl shadow-sm p-6 mb-8 print:hidden">
-          <div className="flex p-1 bg-slate-100 rounded-xl mb-6">
-            <button 
-              onClick={() => setMode('manual')}
-              className={`flex-1 py-2.5 px-4 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 ${mode === 'manual' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-            >
-              <TypeIcon size={16} /> Manual List
-            </button>
-            <button 
-              onClick={() => setMode('ai')}
-              className={`flex-1 py-2.5 px-4 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 ${mode === 'ai' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-            >
-              <Sparkles size={16} /> AI Extraction
-            </button>
-          </div>
-
-          <AnimatePresence mode="wait">
-            {mode === 'manual' ? (
-              <motion.div 
-                key="manual"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 10 }}
+        {!isSharedView && (
+          <div className="bg-white border border-slate-200 rounded-3xl shadow-sm p-6 mb-8 print:hidden">
+            <div className="flex p-1 bg-slate-100 rounded-xl mb-6">
+              <button 
+                onClick={() => setMode('manual')}
+                className={`flex-1 py-2.5 px-4 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 ${mode === 'manual' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
               >
-                <label className="block text-sm font-bold text-slate-700 mb-2">Word & Clue Input</label>
-                <textarea 
-                  value={manualText}
-                  onChange={(e) => setManualText(e.target.value)}
-                  className="w-full h-48 p-4 bg-slate-50 border border-slate-200 rounded-2xl font-mono text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
-                  placeholder="WORD : The clue text here..."
-                />
-                <button 
-                  onClick={handleManualGenerate}
-                  className="w-full mt-4 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl shadow-lg shadow-indigo-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                <TypeIcon size={16} /> Manual List
+              </button>
+              <button 
+                onClick={() => setMode('ai')}
+                className={`flex-1 py-2.5 px-4 rounded-lg font-bold text-sm transition-all flex items-center justify-center gap-2 ${mode === 'ai' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+              >
+                <Sparkles size={16} /> AI Extraction
+              </button>
+            </div>
+
+            <AnimatePresence mode="wait">
+              {mode === 'manual' ? (
+                <motion.div 
+                  key="manual"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 10 }}
                 >
-                  Generate Grid <ChevronRight size={18} />
-                </button>
-              </motion.div>
-            ) : (
-              <motion.div 
-                key="ai"
-                initial={{ opacity: 0, x: 10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-              >
-                <label className="block text-sm font-bold text-slate-700 mb-2">Source Text</label>
-                <textarea 
-                  value={aiText}
-                  onChange={(e) => setAiText(e.target.value)}
-                  className="w-full h-48 p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
-                  placeholder="Paste an article, chapter, or any text here..."
-                />
-                <div className="flex flex-col sm:flex-row gap-4 mt-4">
-                  <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2">
-                    <Hash size={16} className="text-slate-400" />
-                    <span className="text-sm font-bold text-slate-600">Words:</span>
-                    <input 
-                      type="number" 
-                      value={aiCount}
-                      onChange={(e) => setAiCount(parseInt(e.target.value) || 5)}
-                      className="w-12 bg-transparent font-bold text-indigo-600 outline-none"
-                      min={5} max={20}
-                    />
-                  </div>
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Word & Clue Input</label>
+                  <textarea 
+                    value={manualText}
+                    onChange={(e) => setManualText(e.target.value)}
+                    className="w-full h-48 p-4 bg-slate-50 border border-slate-200 rounded-2xl font-mono text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+                    placeholder="WORD : The clue text here..."
+                  />
                   <button 
-                    onClick={handleAiExtract}
-                    disabled={loading}
-                    className="flex-1 py-4 bg-slate-900 border border-slate-900 hover:bg-indigo-600 hover:border-indigo-600 text-white font-black rounded-2xl shadow-lg transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    onClick={handleManualGenerate}
+                    className="w-full mt-4 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-2xl shadow-lg shadow-indigo-200 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                   >
-                    {loading ? <Loader2 className="animate-spin" size={18} /> : <Sparkles size={18} />}
-                    {loading ? "Analyzing..." : "Analyze & Extract"}
+                    Generate Grid <ChevronRight size={18} />
                   </button>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {error && (
-            <motion.div 
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              className="mt-6 p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-700 flex items-start gap-3"
-            >
-              <AlertCircle className="shrink-0 mt-0.5" size={18} />
-              <div>
-                <p className="text-sm font-bold">Extraction Error</p>
-                <p className="text-xs opacity-90">{error}</p>
-              </div>
-            </motion.div>
-          )}
-        </div>
+                </motion.div>
+              ) : (
+                <motion.div 
+                  key="ai"
+                  initial={{ opacity: 0, x: 10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                >
+                  <label className="block text-sm font-bold text-slate-700 mb-2">Source Text</label>
+                  <textarea 
+                    value={aiText}
+                    onChange={(e) => setAiText(e.target.value)}
+                    className="w-full h-48 p-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
+                    placeholder="Paste an article, chapter, or any text here..."
+                  />
+                  <div className="flex flex-col sm:flex-row gap-4 mt-4">
+                    <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-2xl px-4 py-2">
+                      <Hash size={16} className="text-slate-400" />
+                      <span className="text-sm font-bold text-slate-600">Words:</span>
+                      <input 
+                        type="number" 
+                        value={aiCount}
+                        onChange={(e) => setAiCount(parseInt(e.target.value) || 5)}
+                        className="w-12 bg-transparent font-bold text-indigo-600 outline-none"
+                        min={5} max={20}
+                      />
+                    </div>
+                    <button 
+                      onClick={handleAiExtract}
+                      disabled={loading}
+                      className="flex-1 py-4 bg-slate-900 border border-slate-900 hover:bg-indigo-600 hover:border-indigo-600 text-white font-black rounded-2xl shadow-lg transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    >
+                      {loading ? <Loader2 className="animate-spin" size={18} /> : <Sparkles size={18} />}
+                      {loading ? "Analyzing..." : "Analyze & Extract"}
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
 
         {/* Failed Words Alert */}
-        {gridResult && gridResult.failedWords.length > 0 && (
+        {gridResult && gridResult.failedWords.length > 0 && !isSharedView && (
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -658,6 +680,21 @@ export default function App() {
             <div>
               <p className="text-sm font-bold">Partial Fit Warning</p>
               <p className="text-sm opacity-90">Could not fit {gridResult.failedWords.length} word(s): <span className="font-mono font-bold">{gridResult.failedWords.join(', ')}</span>. Try adding more vocabulary to help interlocking.</p>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Errors (outside input panel for shared view visibility) */}
+        {error && (
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8 p-4 bg-rose-50 border border-rose-200 rounded-2xl text-rose-700 flex items-start gap-3 print:hidden"
+          >
+            <AlertCircle className="shrink-0 mt-0.5" size={18} />
+            <div>
+              <p className="text-sm font-bold">Error</p>
+              <p className="text-xs opacity-90">{error}</p>
             </div>
           </motion.div>
         )}
