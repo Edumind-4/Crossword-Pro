@@ -205,7 +205,7 @@ export default function App() {
   useEffect(() => {
     const loadPuzzle = async () => {
       const params = new URLSearchParams(window.location.search);
-      const shortId = params.get('p');
+      const shortId = params.get('cwp');
       const puzzleData = params.get('puzzle');
 
       if (shortId || puzzleData) {
@@ -368,7 +368,7 @@ export default function App() {
       let baseUrl = parentUrl || (window.location.origin + window.location.pathname);
       
       const url = new URL(baseUrl);
-      url.searchParams.set('p', shortId);
+      url.searchParams.set('cwp', shortId);
       
       const shareUrl = url.toString();
       
